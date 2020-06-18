@@ -6,4 +6,6 @@ nginx_mime_file_path: /etc/nginx/mime.types
 nginx_pidfile: /run/nginx.pid
 nginx_vhost_path: /etc/nginx/sites-enabled
 nginx_default_vhost_path: /etc/nginx/sites-enabled/default
+nginx_modules_path: /usr/lib64/nginx/modules
+nginx_php_fpm_address: unix:/run/php-fpm/php-fpm.sock
 __nginx_user: "http"

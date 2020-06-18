@@ -3,7 +3,9 @@ root_group: root
 nginx_conf_path: /etc/nginx/conf.d
 nginx_conf_file_path: /etc/nginx/nginx.conf
 nginx_mime_file_path: /etc/nginx/mime.types
-nginx_pidfile: /var/run/nginx.pid
+nginx_pidfile: /run/nginx.pid
 nginx_vhost_path: /etc/nginx/conf.d
 nginx_default_vhost_path: /etc/nginx/conf.d/default.conf
+nginx_modules_path: /usr/lib64/nginx/modules
+nginx_php_fpm_address: unix:/run/php-fpm/www.sock
 __nginx_user: "nginx"

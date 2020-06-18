@@ -1,0 +1,73 @@
+---
+# - name: Ensure sites directory exists.
+#   file:
+#     path: "{{ nginx_vhost_path }}/sites"
+#     state: directory
+#     owner: root
+#     group: "{{ root_group }}"
+#     mode: 0755
+
+# - name: Ensure sites config exists.
+#   copy:
+#     content: "include {{ nginx_vhost_path }}/sites/*.conf"
+#     dest: "{{ nginx_conf_path }}/sites.conf"
+
+- name: Ensure sites log directory exists.
+  file:
+    path: "{{ nginx_sites_logs }}"
+    state: directory
+    owner: root
+    group: "{{ root_group }}"
+    mode: 0755
+
+- name: Ensure sites log directory exists.
+  file:
+    path: "{{ nginx_sites_logs }}"
+    state: directory
+    owner: root
+    group: "{{ root_group }}"
+    mode: 0755
+
+- name: Create mapping of managed sites
+  set_fact:
+    # <config name>: <path to j2 file>
+    # Example: ansible-admin.conf: .../templates/sites/admin.conf.j2
+    nginx_managed_sites: "{{ nginx_managed_sites|default({}) | combine( { 'ansible-' + item | basename | regex_replace('(.*)\\.j2$', '\\1'): item } ) }}"
+  when: item | basename not in nginx_skip_sites
+  loop: "{{ lookup('fileglob', 'templates/sites/*', wantlist=True) }}"
+
+- name: List of existing managed sites
+  set_fact:
+    check_sites_exist: "{{ check_sites_exist|default([]) + [ item | basename ] }}"
+  loop: "{{ lookup('fileglob', nginx_vhost_path + '/ansible-*', wantlist=True) }}"
+
+- block:
+  - name: Delete old managed sites
+    file:
+      path: "{{ nginx_vhost_path }}/{{ item }}"
+      state: absent
+    when: item not in nginx_managed_sites
+    with_items: "{{ check_sites_exist }}"
+  when: check_sites_exist is defined and check_sites_exist | length > 0
+
+- name: Copy site templates
+  template:
+    src: "{{ item.value }}"
+    dest: "{{ nginx_vhost_path }}/{{ item.key }}"
+    owner: root
+    group: "{{ root_group }}"
+    mode: 0644
+  when: item.value is regex(".*\.j2$") and item.value | basename not in nginx_skip_sites
+  with_dict: "{{ nginx_managed_sites }}"
+  notify: restart nginx
+
+- name: Copy site files
+  copy:
+    src: "{{ item.value }}"
+    dest: "{{ nginx_vhost_path }}/{{ item.key }}"
+    owner: root
+    group: "{{ root_group }}"
+    mode: 0644
+  when: item.value is not regex(".*\.j2$") and item.value | basename not in nginx_skip_sites
+  with_dict: "{{ nginx_managed_sites }}"
+  notify: restart nginx

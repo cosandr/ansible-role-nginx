@@ -1,0 +1,27 @@
+{{ ansible_managed | comment }}
+{% if ports.adminer is defined %}
+server {
+    listen {{ ports.adminer }};
+    server_name {{ ansible_facts.default_ipv4.address }};
+    root {{ adminer_root }};
+
+    access_log {{ nginx_sites_logs }}/adminer-access.log;
+    error_log {{ nginx_sites_logs }}/adminer-error.log warn;
+    location / {
+        index index.php;
+        try_files $uri $uri/ /index.php?$args;
+        allow {{ ansible_facts.default_ipv4.network }}/24;
+        deny all;
+    }
+
+    location ~ \.php$ {
+        include /etc/nginx/fastcgi_params;
+        # There should be a php-fpm.conf file in /etc/nginx/conf.d/php-fpm.conf
+        # which defines an upstream for php-fpm
+        fastcgi_pass php-fpm;
+        # fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    }
+}
+{% endif %}

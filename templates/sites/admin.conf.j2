@@ -1,0 +1,87 @@
+{{ ansible_managed | comment }}
+server {
+    listen 80;
+    listen [::]:80;
+    server_name admin.{{ server_domain }};
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name admin.{{ server_domain }};
+    large_client_header_buffers 4 16k;
+   
+    include proxy_params;
+    access_log {{ nginx_sites_logs }}/admin-access.log;
+    error_log {{ nginx_sites_logs }}/admin-error.log warn;
+
+    auth_request /vouch-validate;
+
+    location = /vouch-validate {
+        include /etc/nginx/vouch.conf;
+    }
+
+    error_page 401 = @error401;
+
+    # If the user is not logged in, redirect them to Vouch's login URL
+    location @error401 {
+        return 302 https://login.{{ server_domain }}/login?url=https://$http_host$request_uri&vouch-failcount=$auth_resp_failcount&X-Vouch-Token=$auth_resp_jwt&error=$auth_resp_err;
+    }
+
+    location / {
+        return 404;
+    }
+{% if ports.glances is defined %}
+    location /glances/ {
+        port_in_redirect off;
+        rewrite /glances/(.*) /$1 break;
+        proxy_pass http://glances/;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+{% endif %}
+{% if ports.monitorix is defined %}
+    location /monitorix {
+        proxy_pass      http://monitorix/monitorix;
+
+        # since 3.5.0 version
+        location ~ ^/monitorix/(.+\.png)$ {
+            alias /var/lib/monitorix/www/$1;
+        }
+    }
+{% endif %}
+{% if ports.transmission is defined %}
+    location /transmission {
+        proxy_pass          http://transmission;
+        proxy_redirect      off;
+        proxy_set_header    Host $host;
+        proxy_set_header    X-Real-IP $remote_addr;
+        proxy_set_header    X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+{% endif %}
+{% if ports.portainer is defined %}
+    location /portainer/ {
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_pass http://portainer/;
+    }
+    location /portainer/api/websocket/ {
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_http_version 1.1;
+        proxy_pass http://portainer/api/websocket/;
+    }
+{% endif %}
+{% if ports.vscode is defined %}
+    location /vscode/ {
+        proxy_pass http://vscode/;
+        proxy_set_header Host $host;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection upgrade;
+        proxy_set_header Accept-Encoding gzip;
+    }
+{% endif %}
+}

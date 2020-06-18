@@ -1,0 +1,61 @@
+{{ ansible_managed | comment }}
+# Redirect bare domain to www subdomain
+server {
+    listen 80;
+    listen [::]:80;
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name {{ server_domain }};
+    return 301 https://www.$server_name$request_uri;
+}
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name www.{{ server_domain }};
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name www.{{ server_domain }};
+    root {{ web_root }}/main;
+    index index.html index.php index.cgi;
+
+    access_log {{ nginx_sites_logs }}/www-access.log;
+    error_log {{ nginx_sites_logs }}/www-error.log warn;
+
+    location ~ \.php$ {
+        include /etc/nginx/fastcgi_params;
+        fastcgi_pass php-fpm;
+        # fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    }
+
+    location / {
+        autoindex off;
+        try_files $uri $uri/ $uri.html $uri.php$is_args$query_string;
+    }
+
+    # Disable hidden files
+    location ~ /\. {
+        deny all;
+        return 404;
+    }
+
+    # Block private
+    location /private {
+        deny all;
+        return 404;
+    }
+{% if ports.grafana is defined %}
+    location /grafana/ {
+        proxy_pass          http://grafana/;
+        proxy_set_header    Host $host;
+        proxy_set_header    X-Real-IP $remote_addr;
+        proxy_set_header    X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+{% endif %}
+}

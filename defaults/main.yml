@@ -1,4 +1,27 @@
 ---
+nginx_skip_install: false
+
+nginx_http_ssl_certificate: ""
+nginx_http_ssl_certificate_key: ""
+nginx_http_ssl_protocols: "TLSv1.1 TLSv1.2 TLSv1.3"
+nginx_ssl_prefer_server_ciphers: "on"
+
+nginx_cloudflare_real_ips: "/etc/nginx/cloudflare.conf"
+
+nginx_modules_path: "/usr/lib64/nginx/modules"
+nginx_modules_conf_path: "/usr/share/nginx/modules"
+
+nginx_rtmp_port: 1935
+nginx_rtmp_module_file: "ngx_rtmp_module.so"
+
+nginx_sites_logs: /var/log/nginx/sites
+
+nginx_load_modules: []
+# nginx_load_modules: ["ngx_http_dav_ext_module", "ngx_rtmp_module"]
+
+nginx_skip_sites: []
+# nginx_skip_sites: ["webdav.conf.j2"]
+
 # Used only for Debian/Ubuntu installation, as the -t option for apt.
 nginx_default_release: ""
 

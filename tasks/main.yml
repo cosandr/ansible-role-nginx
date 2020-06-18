@@ -9,26 +9,38 @@
   when: nginx_user is not defined
 
 # Setup/install tasks.
-- include_tasks: setup-RedHat.yml
-  when: ansible_os_family == 'RedHat'
+- include_tasks: "setup-{{ ansible_os_family }}.yml"
+  when: not nginx_skip_install
 
-- include_tasks: setup-Ubuntu.yml
-  when: ansible_distribution == 'Ubuntu'
+# Modules configuration.
+- import_tasks: modules.yml
 
-- include_tasks: setup-Debian.yml
-  when: ansible_os_family == 'Debian'
+- name: Check for cloudflare config
+  stat:
+    path: "{{ nginx_cloudflare_real_ips }}"
+  register: check_cloudflare
 
-- include_tasks: setup-FreeBSD.yml
-  when: ansible_os_family == 'FreeBSD'
+# RTMP configuration.
+- import_tasks: rtmp.yml
 
-- include_tasks: setup-OpenBSD.yml
-  when: ansible_os_family == 'OpenBSD'
+# Upstreams configuration
+- import_tasks: upstreams.yml
 
-- include_tasks: setup-Archlinux.yml
-  when: ansible_os_family == 'Archlinux'
+# Copy vouch config if relevant
+- name: Copy vouch config
+  copy:
+    src: files/vouch.conf
+    dest: /etc/nginx/vouch.conf
+    owner: root
+    group: "{{ root_group }}"
+    mode: 0644
+  when: ports.vouch is defined
 
 # Vhost configuration.
 - import_tasks: vhosts.yml
+
+# Sites configuration.
+- import_tasks: sites.yml
 
 # Nginx setup.
 - name: Copy nginx configuration in place.

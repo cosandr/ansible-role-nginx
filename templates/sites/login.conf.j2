@@ -1,0 +1,24 @@
+{{ ansible_managed | comment }}
+{% if ports.vouch is defined %}
+server {
+    listen 80;
+    listen [::]:80;
+    server_name login.{{ server_domain }};
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name login.{{ server_domain }};
+
+    access_log {{ nginx_sites_logs }}/login-access.log;
+    error_log {{ nginx_sites_logs }}/login-error.log warn;
+
+    # Proxy to your Vouch instance
+    location / {
+        proxy_set_header  Host  login.{{ server_domain }};
+        proxy_set_header  X-Forwarded-Proto https;
+        proxy_pass        http://vouch;
+    }
+}
+{% endif %}

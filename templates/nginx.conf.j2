@@ -11,6 +11,12 @@ worker_processes  {{ nginx_worker_processes }};
 {{ nginx_extra_conf_options }}
 {% endif %}
 
+include {{ nginx_modules_conf_path }}/*.conf;
+
+{% if check_rtmp.stat.exists %}
+include /etc/nginx/rtmp.conf;
+{% endif %}
+
 {% block events %}
 events {
     worker_connections  {{ nginx_worker_connections }};
@@ -23,6 +29,9 @@ http {
 
 {% block http_basic %}
     include       {{ nginx_mime_file_path }};
+{% if check_cloudflare.stat.exists %}
+    include       {{ nginx_cloudflare_real_ips }};
+{% endif %}
     default_type  application/octet-stream;
 
     server_names_hash_bucket_size {{ nginx_server_names_hash_bucket_size }};
@@ -50,25 +59,16 @@ http {
     # gzip on;
 {% endblock %}
 
+{% block http_ssl %}
+    ssl_certificate {{ nginx_http_ssl_certificate }};
+    ssl_certificate_key {{ nginx_http_ssl_certificate_key }};
+    ssl_protocols {{ nginx_http_ssl_protocols }};
+    ssl_prefer_server_ciphers {{ nginx_ssl_prefer_server_ciphers }};
+{% endblock %}
+
 {% if nginx_extra_http_options %}
     {{ nginx_extra_http_options|indent(4, False) }}
 {% endif %}
-
-{% block http_upstream %}
-{% for upstream in nginx_upstreams %}
-    upstream {{ upstream.name }} {
-{% if upstream.strategy is defined %}
-        {{ upstream.strategy }};
-{% endif %}
-{% for server in upstream.servers %}
-        server {{ server }};
-{% endfor %}
-{% if upstream.keepalive is defined %}
-        keepalive {{ upstream.keepalive }};
-{% endif %}
-    }
-{% endfor %}
-{% endblock %}
 
 {% block http_includes %}
     include {{ nginx_conf_path }}/*.conf;

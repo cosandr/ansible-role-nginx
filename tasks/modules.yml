@@ -1,0 +1,48 @@
+---
+- name: Ensure nginx_modules_conf_path exists.
+  file:
+    path: "{{ nginx_modules_conf_path }}"
+    state: directory
+    owner: root
+    group: "{{ root_group }}"
+    mode: 0755
+
+- block:
+  - name: Checking existing file name
+    stat:
+      path: "{{ nginx_modules_path }}/{{ item }}.so"
+    with_items: "{{ nginx_load_modules }}"
+    register: check_modules_exist
+
+  - name: Initialize modules list
+    set_fact:
+      nginx_ok_modules: []
+
+  - name: Add modules which exist
+    set_fact:
+      nginx_ok_modules: "{{ nginx_ok_modules + [ item.item ] }}"
+    with_items: "{{ check_modules_exist.results }}"
+    ignore_errors: yes
+    when: item.stat.exists
+
+  - name: Warn about non-existing module configs
+    fail:
+      msg: "Module {{ item }} not found"
+    with_items: "{{ nginx_load_modules }}"
+    ignore_errors: yes
+    when: item not in nginx_ok_modules
+
+  - name: Delete non-existing module configs
+    file:
+      path: "{{ nginx_modules_conf_path }}/mod-{{ item | replace('ngx_', '') | replace('_', '-') }}.conf"
+      state: absent
+    with_items: "{{ nginx_load_modules }}"
+    when: item not in nginx_ok_modules
+
+  - name: Create config files for good modules
+    copy:
+      content: "load_module \"{{ nginx_modules_path }}/{{ item }}.so\";\n"
+      dest: "{{ nginx_modules_conf_path }}/mod-{{ item | replace('ngx_', '') | replace('_', '-') }}.conf"
+    with_items: "{{ nginx_ok_modules }}"
+  
+  when: nginx_load_modules | length > 0

@@ -1,0 +1,13 @@
+---
+- name: Create nginx_upstreams from ports
+  set_fact:
+    nginx_upstreams: "{{ nginx_upstreams + [ {'name': item.key, 'servers': ['127.0.0.1:' + item.value | string]} ] }}"
+  with_dict: "{{ ports }}"
+
+- name: Copy upstreams config
+  template:
+    src: upstreams.conf.j2
+    dest: "{{  nginx_conf_path }}/upstreams.conf"
+    owner: root
+    group: "{{ root_group }}"
+    mode: 0644

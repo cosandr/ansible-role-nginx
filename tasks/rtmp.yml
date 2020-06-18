@@ -1,0 +1,23 @@
+---
+- name: Ensure RTMP module exists
+  stat:
+    path: "{{ nginx_modules_path }}/{{ nginx_rtmp_module_file }}"
+  register: check_rtmp
+
+
+- block:
+    - name: Copy RTMP config
+      template:
+        src: rtmp.conf.j2
+        dest: /etc/nginx/rtmp.conf
+        owner: root
+        group: "{{ root_group }}"
+        mode: 0644
+
+  when: check_rtmp.stat.exists
+
+- name: RTMP module not found
+  ignore_errors: true
+  fail:
+    msg: "RTMP module ({{ check_rtmp.item }}) not found"
+  when: not check_rtmp.stat.exists
