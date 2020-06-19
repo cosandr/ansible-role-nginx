@@ -100,7 +100,7 @@ Nginx server_tokens settings. Controls whether nginx responds with it's version 
 
 This value determines the largest file upload possible, as uploads are passed through Nginx before hitting a backend like `php-fpm`. If you get an error like `client intended to send too large body`, it means this value is set too low.
 
-    nginx_server_names_hash_bucket_size: "64"
+    nginx_types_hash_bucket_size: "64"
 
 If you have many server names, or have very long server names, you might get an Nginx error on startup requiring this value to be increased.
 

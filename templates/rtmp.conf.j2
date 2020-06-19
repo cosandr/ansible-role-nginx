@@ -9,7 +9,6 @@ rtmp {
         deny publish all;
 
         access_log {{ nginx_sites_logs }}/rtmp-access.log;
-        error_log {{ nginx_sites_logs }}/rtmp-error.log warn;
 
         application hls {
             live on;
