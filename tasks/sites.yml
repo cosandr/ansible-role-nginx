@@ -20,14 +20,6 @@
     group: "{{ root_group }}"
     mode: 0755
 
-- name: Ensure sites log directory exists.
-  file:
-    path: "{{ nginx_sites_logs }}"
-    state: directory
-    owner: root
-    group: "{{ root_group }}"
-    mode: 0755
-
 - name: Create mapping of managed sites
   set_fact:
     # <config name>: <path to j2 file>
