@@ -2,17 +2,19 @@
 # Variable setup.
 - name: Include OS-specific variables.
   include_vars: "{{ ansible_os_family }}.yml"
-  tags: ["systemd"]
+  tags: ["systemd", "vouch"]
 
 - name: Define nginx_user.
   set_fact:
     nginx_user: "{{ __nginx_user }}"
   when: nginx_user is not defined
-  tags: ["systemd"]
+  tags: ["systemd", "vouch"]
 
 # Setup/install tasks.
 - include_tasks: "setup-{{ ansible_os_family }}.yml"
-  when: not nginx_skip_install
+  when:
+  - not nginx_skip_install
+  - "'skip_install' not in ansible_run_tags"
 
 # Modules configuration.
 - import_tasks: modules.yml

@@ -23,6 +23,8 @@
       nginx_ok_modules: "{{ nginx_ok_modules + [ item.item ] }}"
     with_items: "{{ check_modules_exist.results }}"
     ignore_errors: yes
+    loop_control:
+      label: "{{ item.item }}"
     when: item.stat.exists
 
   - name: Warn about non-existing module configs
