@@ -57,7 +57,7 @@ http {
 {% endblock %}
 
 {% block http_gzip %}
-    # gzip on;
+    gzip on;
 {% endblock %}
 
 {% block http_ssl %}
@@ -74,7 +74,7 @@ http {
 {% block http_includes %}
     include {{ nginx_conf_path }}/*.conf;
 {% if nginx_conf_path != nginx_vhost_path %}
-    include {{ nginx_vhost_path }}/*;
+    include {{ nginx_vhost_path }}/*.conf;
 {% endif %}
 {% endblock %}
 

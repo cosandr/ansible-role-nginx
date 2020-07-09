@@ -8,7 +8,7 @@ rtmp {
         deny play all;
         deny publish all;
 
-        access_log {{ nginx_sites_logs }}/rtmp-access.log;
+        access_log {{ nginx_sites_logs }}/access-rtmp.log;
 
         application hls {
             live on;

@@ -1,18 +1,11 @@
 {{ ansible_managed | comment }}
 server {
-    listen 80;
-    listen [::]:80;
-    server_name cloud.{{ server_domain }};
-    return 301 https://$host$request_uri;
-}
-
-server {
     listen 443 ssl http2;
     listen [::]:443 ssl http2;
     server_name cloud.{{ server_domain }};
 
-    access_log {{ nginx_sites_logs }}/cloud-access.log;
-    error_log {{ nginx_sites_logs }}/cloud-error.log warn;
+    access_log {{ nginx_sites_logs }}/access-cloud.{{ server_domain }}.log {{ nginx_access_log_options }};
+    error_log {{ nginx_sites_logs }}/error-cloud.{{ server_domain }}.log {{ nginx_error_log_options }};
 
     # Add headers to serve security related headers
     # Before enabling Strict-Transport-Security headers please read into this
