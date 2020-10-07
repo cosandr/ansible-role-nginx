@@ -52,6 +52,12 @@ server {
         deny all;
         return 403;
     }
+
+    location /pip {
+        alias {{ pip_wheel_dir | default(web_root + '/pip') }};
+        autoindex on;
+    }
+
 {% if ports.grafana is defined %}
     location /grafana/ {
         proxy_pass          http://grafana/;

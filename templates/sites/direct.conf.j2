@@ -25,6 +25,11 @@ server {
         fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
     }
 
+    location /pip {
+        alias {{ pip_wheel_dir | default(web_root + '/pip') }};
+        autoindex on;
+    }
+
     proxy_redirect                     off;
     proxy_set_header Host              $http_host;
     proxy_set_header X-Real-IP         $remote_addr;
