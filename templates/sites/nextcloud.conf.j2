@@ -47,5 +47,11 @@ server {
 
         proxy_max_temp_file_size 2048m;
     }
+
+    location ^~ /.well-known {
+        location = /.well-known/carddav     { return 301 $scheme://$host/remote.php/dav; }
+        location = /.well-known/caldav      { return 301 $scheme://$host/remote.php/dav; }
+        location ^~ /.well-known            { return 301 $scheme://$host/index.php$uri; }
+    }
 }
 {% endif %}
