@@ -1,0 +1,33 @@
+{{ ansible_managed | comment }}
+{% if ports.notes_sync is defined %}
+server {
+    listen 443 ssl http2;
+    server_name stdsync.{{ server_domain }};
+    access_log {{ nginx_sites_logs }}/access-stdsync.{{ server_domain }}.log {{ nginx_access_log_options }};
+    error_log {{ nginx_sites_logs }}/error-stdsync.{{ server_domain }}.log {{ nginx_error_log_options }};
+
+    location / {
+        proxy_set_header        Host $host;
+        proxy_set_header        X-Real-IP $remote_addr;
+        proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header        X-Forwarded-Proto $scheme;
+        proxy_pass              http://notes_sync/;
+    }
+}
+{% endif %}
+{% if ports.notes_web is defined %}
+server {
+    listen 443 ssl http2;
+    server_name notes.{{ server_domain }};
+    access_log {{ nginx_sites_logs }}/access-notes.{{ server_domain }}.log {{ nginx_access_log_options }};
+    error_log {{ nginx_sites_logs }}/error-notes.{{ server_domain }}.log {{ nginx_error_log_options }};
+
+    location / {
+        proxy_set_header        Host $host;
+        proxy_set_header        X-Real-IP $remote_addr;
+        proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header        X-Forwarded-Proto $scheme;
+        proxy_pass              http://notes_web/;
+    }
+}
+{% endif %}
