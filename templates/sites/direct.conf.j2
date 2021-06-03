@@ -17,6 +17,16 @@ server {
     }
 {% endif %}
 
+    location /motion/ {
+        proxy_pass http://motion/;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        allow {{ ansible_facts.default_ipv4.network }}/24;
+        deny all;
+    }
+
     location ~ \.php$ {
         include /etc/nginx/fastcgi_params;
         fastcgi_pass php-fpm;
