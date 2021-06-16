@@ -13,8 +13,8 @@
 # Setup/install tasks.
 - include_tasks: "setup-{{ ansible_os_family }}.yml"
   when:
-  - not nginx_skip_install
-  - "'skip_install' not in ansible_run_tags"
+    - not nginx_skip_install
+  tags: ["install"]
 
 # Modules configuration.
 - import_tasks: modules.yml
