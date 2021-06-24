@@ -5,6 +5,7 @@ server {
     listen [::]:80;
     server_name git.{{ server_domain }}
                 login.{{ server_domain }}
+                gitlab.{{ server_domain }}
                 registry.{{ server_domain }}
                 *.{{ server_domain }};
     return 301 https://$host$request_uri;

@@ -14,8 +14,9 @@ server {
     error_log {{ nginx_sites_logs }}/error-jellyfin.{{ server_domain }}.log {{ nginx_error_log_options }};
 
     add_header Strict-Transport-Security "max-age=31536000" always;
-    ssl_stapling on;
-    ssl_stapling_verify on;
+    # issuer certificate not found for certificate
+    # ssl_stapling on;
+    # ssl_stapling_verify on;
     # Security / XSS Mitigation Headers
     add_header X-Frame-Options "SAMEORIGIN";
     add_header X-XSS-Protection "1; mode=block";
