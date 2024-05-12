@@ -13,29 +13,61 @@
     mode: 0755
   notify: reload nginx
 
+- name: Register existing copied vhosts
+  ansible.builtin.find:
+    paths: "{{ nginx_vhost_path }}"
+    patterns:
+      - "*.conf"
+  register: __nginx_present
+  when: nginx_provisioning_synced
+
 - name: Add managed vhost config files.
   template:
     src: "{{ item.template|default(nginx_vhost_template) }}"
-    dest: "{{ nginx_vhost_path }}/{{ item.filename|default(item.server_name.split(' ')[0] ~ '.conf') }}"
+    dest: "{{ nginx_vhost_path }}/{{ filename }}"
     force: true
     owner: root
     group: "{{ root_group }}"
     mode: 0644
-  when: item.state|default('present') != 'absent'
-  with_items: "{{ nginx_vhosts }}"
+  loop: "{{ nginx_vhosts | selectattr('state', 'undefined') + nginx_vhosts | selectattr('state', 'defined') | selectattr('state', 'eq', 'present') }}"
+  loop_control:
+    label: "{{ filename }}"
+  register: __nginx_copied
+  vars:
+    filename: "{{ item.filename|default(item.server_name.split(' ')[0] ~ '.conf') }}"
   notify: reload nginx
   tags:
     - skip_ansible_lint
 
 - name: Remove managed vhost config files.
   file:
-    path: "{{ nginx_vhost_path }}/{{ item.filename|default(item.server_name.split(' ')[0] ~ '.conf') }}"
+    path: "{{ nginx_vhost_path }}/{{ filename }}"
     state: absent
-  when: item.state|default('present') == 'absent'
-  with_items: "{{ nginx_vhosts }}"
+  loop: "{{ nginx_vhosts | selectattr('state', 'defined') | selectattr('state', 'eq', 'absent') }}"
+  loop_control:
+    label: "{{ filename }}"
+  vars:
+    filename: "{{ item.filename|default(item.server_name.split(' ')[0] ~ '.conf') }}"
   notify: reload nginx
   tags:
     - skip_ansible_lint
+
+- name: Set synchronize facts
+  ansible.builtin.set_fact:
+    __nginx_present_list: "{{ __nginx_present | json_query('files[*].path') | default([]) }}"
+    __nginx_copied_list: "{{ __nginx_copied_tmp + __nginx_copied_tmp_check }}"
+  vars:
+    __nginx_copied_tmp: "{{ __nginx_copied.results | json_query('[*].dest') | default([]) }}"
+    __nginx_copied_tmp_check: "{{ __nginx_copied.results | json_query('[*].invocation.dest') | default([]) }}"
+  when: nginx_provisioning_synced
+
+- name: Remove configs not present on deployer machine (synchronize)
+  become: true
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop: "{{ __nginx_present_list | difference(__nginx_copied_list) }}"
+  when: nginx_provisioning_synced
 
 - name: Remove legacy vhosts.conf file.
   file:

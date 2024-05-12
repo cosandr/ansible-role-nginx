@@ -60,6 +60,7 @@ nginx_extra_http_options: ""
 #      proxy_set_header   Host $http_host;
 
 nginx_remove_default_vhost: false
+nginx_provisioning_synced: false
 
 # Listen on IPv6 (default: true)
 nginx_listen_ipv6: true
