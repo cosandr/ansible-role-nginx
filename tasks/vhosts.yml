@@ -16,8 +16,8 @@
 - name: Register existing copied vhosts
   ansible.builtin.find:
     paths: "{{ nginx_vhost_path }}"
-    patterns:
-      - "*.conf"
+    patterns: "{{ nginx_provisioning_synced_patterns }}"
+    excludes: "{{ nginx_provisioning_synced_excludes }}"
   register: __nginx_present
   when: nginx_provisioning_synced
 
