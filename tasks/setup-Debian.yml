@@ -1,10 +1,42 @@
 ---
+
 - name: Update apt cache.
-  apt: update_cache=yes cache_valid_time=86400
-  changed_when: false
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 86400
+
+- name: Debian repo install
+  when: nginx_debian_repo_enabled
+  block:
+    - name: Copy nginx GPG key
+      ansible.builtin.copy:
+        src: nginx-archive-keyring.gpg
+        dest: /etc/apt/keyrings/nginx-archive-keyring.gpg
+        owner: root
+        group: root
+        mode: "0644"
+      diff: false
+
+    - name: Add nginx repo
+      ansible.builtin.apt_repository:
+        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/nginx-archive-keyring.gpg] https://nginx.org/packages/debian {{ ansible_distribution_release | lower }} nginx"
+        state: present
+        filename: nginx
+
+    - name: Prefer repo packages
+      ansible.builtin.copy:
+        content: |
+          Package: *
+          Pin: origin nginx.org
+          Pin: release o=nginx
+          Pin-Priority: 900
+        dest: "/etc/apt/preferences.d/99nginx"
+        owner: root
+        group: root
+        mode: "0644"
 
 - name: Ensure nginx is installed.
-  apt:
+  ansible.builtin.apt:
     name: "{{ nginx_package_name }}"
     state: present
     default_release: "{{ nginx_default_release }}"
