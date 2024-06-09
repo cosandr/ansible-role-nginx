@@ -15,10 +15,20 @@
 
 - name: Register existing copied vhosts
   ansible.builtin.find:
+    file_type: file
     paths: "{{ nginx_vhost_path }}"
     patterns: "{{ nginx_provisioning_synced_patterns }}"
     excludes: "{{ nginx_provisioning_synced_excludes }}"
   register: __nginx_present
+  when: nginx_provisioning_synced
+
+- name: Register existing copied vhosts symlinks
+  ansible.builtin.find:
+    file_type: link
+    paths: "{{ nginx_vhost_path }}"
+    patterns: "{{ nginx_provisioning_synced_patterns }}"
+    excludes: "{{ nginx_provisioning_synced_excludes }}"
+  register: __nginx_present_link
   when: nginx_provisioning_synced
 
 - name: Add managed vhost config files.
@@ -54,9 +64,11 @@
 
 - name: Set synchronize facts
   ansible.builtin.set_fact:
-    __nginx_present_list: "{{ __nginx_present | json_query('files[*].path') | default([]) }}"
+    __nginx_present_list: "{{ __nginx_present_files + __nginx_present_links }}"
     __nginx_copied_list: "{{ __nginx_copied_tmp + __nginx_copied_tmp_check }}"
   vars:
+    __nginx_present_files: "{{ __nginx_present | json_query('files[*].path') | default([]) }}"
+    __nginx_present_links: "{{ __nginx_present_link | json_query('files[*].path') | default([]) }}"
     __nginx_copied_tmp: "{{ __nginx_copied.results | json_query('[*].dest') | default([]) }}"
     __nginx_copied_tmp_check: "{{ __nginx_copied.results | json_query('[*].invocation.dest') | default([]) }}"
   when: nginx_provisioning_synced
@@ -66,7 +78,9 @@
   ansible.builtin.file:
     path: "{{ item }}"
     state: absent
+    follow: false
   loop: "{{ __nginx_present_list | difference(__nginx_copied_list) }}"
+  notify: reload nginx
   when: nginx_provisioning_synced
 
 - name: Remove legacy vhosts.conf file.
