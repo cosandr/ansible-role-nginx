@@ -6,7 +6,9 @@
     cache_valid_time: 86400
 
 - name: Debian repo install
-  when: nginx_debian_repo_enabled
+  when:
+    - ansible_distribution != 'Ubuntu'
+    - nginx_debian_repo_enabled
   block:
     - name: Copy nginx GPG key
       ansible.builtin.copy:
