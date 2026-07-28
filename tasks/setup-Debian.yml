@@ -7,7 +7,7 @@
 
 - name: Debian repo install
   when:
-    - ansible_distribution != 'Ubuntu'
+    - ansible_facts.distribution != 'Ubuntu'
     - nginx_debian_repo_enabled
   block:
     - name: Copy nginx GPG key
@@ -21,7 +21,7 @@
 
     - name: Add nginx repo
       ansible.builtin.apt_repository:
-        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/nginx-archive-keyring.gpg] https://nginx.org/packages/debian {{ ansible_distribution_release | lower }} nginx"
+        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/nginx-archive-keyring.gpg] https://nginx.org/packages/debian {{ ansible_facts.distribution_release | lower }} nginx"
         state: present
         filename: nginx
 
